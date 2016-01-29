@@ -11,40 +11,24 @@ public class Client implements Runnable {
     private PrintWriter pr1;
     private Socket socket;
     private Thread outgoingThread, incomingThread;
-    private String in = "", out = "";
-    private String username;
+    private String in = "", out = "", username, connected;
     private int portToUse;
-    private String ipToUse;
+    private ChatUserInterface chatUI;
 
-    public Client() {
 
-        Scanner user_input = new Scanner(System.in);
-
-        //Get the IP address you want to connect to
-        System.out.println("Please enter the IP address to connect to");
-        ipToUse = user_input.next();
-
-        //Get the Port number you want to conenct to
-        System.out.println("Please enter the port address to connect to");
-        portToUse = Integer.parseInt(user_input.next());
-
-        //Let the user set their username
-        System.out.println("Please enter your username");
-        username = user_input.next();
-
+    public Client(String ipToUse, int portToUse, String username, ChatUserInterface chatUI) {
+        this.username = username;
+        this.chatUI = chatUI;
         try {
             outgoingThread = new Thread(this);
             incomingThread = new Thread(this);
             socket = new Socket(ipToUse, portToUse);
             outgoingThread.start();;
             incomingThread.start();
-
-        } catch (Exception e) {
-        }
+        }catch(Exception e){}
     }
 
     public void run() {
-
         try {
             if (Thread.currentThread() == outgoingThread) {
                 do {
@@ -55,17 +39,26 @@ public class Client implements Runnable {
                 } while (!in.contains("/END/"));
             } else {
                 do {
-                    br2 = new BufferedReader(new   InputStreamReader(socket.getInputStream()));
+                    br2 = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                     out = br2.readLine();
-                    System.out.println(out);
+                    chatUI.addMessageToChat(out);
                 } while (!out.contains("/END/"));
             }
-        } catch (Exception e) {
-        }
-
+        } catch(Exception e){}
     }
 
-    public static void main(String[] args) {
-        new Client();
+    public void sendMessage(String messageToSend){
+        try{
+        PrintWriter pr1 = new PrintWriter(socket.getOutputStream(), true);
+        pr1.println(messageToSend);
+        }catch(Exception e){}
+    }
+
+    public String getUserName(){
+        return username;
+    }
+
+    public boolean connected(){
+        return socket.isConnected();
     }
 }
